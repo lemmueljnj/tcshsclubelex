@@ -1,46 +1,46 @@
 body {
   margin: 0;
-  font-family: 'Montserrat', sans-serif;
-  background: #2b5069;
-  color: #fff;
+  font-family: Montserrat, sans-serif;
+  background: #ffffff;
+  color: #2b5069;
 }
 
 .container {
+  max-width: 500px;
+  margin: auto;
   padding: 20px;
-}
-
-.card {
-  background: #ffffff;
-  color: #2b5069;
-  border-radius: 16px;
-  padding: 15px;
-  margin: 10px 0;
-  transition: 0.3s;
-}
-
-button {
-  background: #2b5069;
-  color: white;
-  border: none;
-  padding: 10px;
-  border-radius: 10px;
-  cursor: pointer;
 }
 
 input {
   width: 100%;
-  padding: 10px;
-  margin: 5px 0;
-  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0;
   border: 1px solid #ccc;
+  border-radius: 10px;
 }
 
-.flex {
+button {
+  width: 100%;
+  padding: 12px;
+  background: #2b5069;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+.card {
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 12px;
+  border: 1px solid #eee;
+}
+
+#loading {
+  position: fixed;
+  inset: 0;
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-@media(max-width:768px){
-  .card { width: 100%; }
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
