@@ -1,5 +1,8 @@
-// firebase.js
+// Firebase App (Modular SDK)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js";
+
+// Auth
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -7,6 +10,7 @@ import {
   signOut
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
+// Firestore
 import {
   getFirestore,
   collection,
@@ -19,24 +23,24 @@ import {
   increment
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+/* ---------------- YOUR FIREBASE CONFIG ---------------- */
 
-// 🔴 YOUR FIREBASE CONFIG HERE
 const firebaseConfig = {
   apiKey: "AIzaSyBXGhX5RMuw5hGNdfgr9UY-dByt7PFrFoo",
   authDomain: "tcshs-club-elections--26.firebaseapp.com",
   projectId: "tcshs-club-elections--26",
-  storageBucket: "tcshs-club-elections--26.firebasestorage.app",,
+  storageBucket: "tcshs-club-elections--26.firebasestorage.app",
+  messagingSenderId: "189056913210",
+  appId: "1:189056913210:web:68b8ece468ecb93c824a03",
   measurementId: "G-VFCWQPCMZC"
-  appId: "1:189056913210:web:68b8ece468ecb93c824a03
 };
+
+/* ---------------- INIT FIREBASE ---------------- */
 
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
+
+/* ---------------- EXPORTS ---------------- */
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
