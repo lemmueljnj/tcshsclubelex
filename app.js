@@ -14,25 +14,43 @@ import {
   increment
 } from "./firebase.js";
 
+/* ---------------- ROOT ---------------- */
+
 const app = document.getElementById("app");
+const loading = document.getElementById("loading");
 
 let currentUser = null;
 let role = null;
 
-/* ---------------- LOGIN ---------------- */
+/* ---------------- INIT SAFE ---------------- */
+
+function showApp() {
+  loading.style.display = "none";
+  app.style.display = "block";
+}
+
+/* ---------------- LOGIN PAGE ---------------- */
 
 function loginPage() {
+  showApp();
+
   app.innerHTML = `
     <div class="container">
       <h2>School Voting System</h2>
+
       <input id="email" placeholder="Email / LRN Email">
       <input id="password" type="password" placeholder="Password">
-      <button onclick="login()">Login</button>
+
+      <button id="loginBtn">Login</button>
     </div>
   `;
+
+  document.getElementById("loginBtn").onclick = login;
 }
 
-window.login = async function () {
+/* ---------------- LOGIN ---------------- */
+
+async function login() {
   try {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
@@ -53,17 +71,14 @@ window.login = async function () {
 
   } catch (err) {
     console.error(err);
-    alert("Login failed. Check credentials.");
+    alert("Login failed. Check credentials or Firebase setup.");
   }
-};
+}
 
 /* ---------------- ROUTING ---------------- */
 
 function route() {
-  if (!role) {
-    loginPage();
-    return;
-  }
+  if (!role) return loginPage();
 
   if (role === "admin") adminDashboard();
   else studentDashboard();
@@ -72,16 +87,19 @@ function route() {
 /* ---------------- ADMIN ---------------- */
 
 async function adminDashboard() {
+  showApp();
+
   app.innerHTML = `
     <div class="container">
       <h2>Admin Dashboard</h2>
-      <button onclick="logout()">Logout</button>
+      <button id="logoutBtn">Logout</button>
 
       <h3>Add Candidate</h3>
       <input id="name" placeholder="Name">
       <input id="position" placeholder="Position">
       <input id="party" placeholder="Party">
-      <button onclick="addCandidate()">Add</button>
+
+      <button id="addBtn">Add Candidate</button>
 
       <h3>Candidates</h3>
       <div id="candidates"></div>
@@ -91,41 +109,44 @@ async function adminDashboard() {
     </div>
   `;
 
+  document.getElementById("logoutBtn").onclick = logout;
+  document.getElementById("addBtn").onclick = addCandidate;
+
   loadCandidates();
   loadResults();
 }
 
-window.addCandidate = async function () {
-  try {
-    const name = document.getElementById("name").value;
-    const position = document.getElementById("position").value;
-    const party = document.getElementById("party").value;
+/* ---------------- ADD CANDIDATE ---------------- */
 
-    if (!name || !position || !party) {
-      alert("Please fill all fields.");
-      return;
-    }
+async function addCandidate() {
+  const name = document.getElementById("name").value;
+  const position = document.getElementById("position").value;
+  const party = document.getElementById("party").value;
 
-    await addDoc(collection(db, "candidates"), {
-      name,
-      position,
-      party,
-      votes: 0
-    });
-
-    loadCandidates();
-
-  } catch (err) {
-    console.error(err);
+  if (!name || !position || !party) {
+    alert("Fill all fields");
+    return;
   }
-};
+
+  await addDoc(collection(db, "candidates"), {
+    name,
+    position,
+    party,
+    votes: 0
+  });
+
+  loadCandidates();
+}
+
+/* ---------------- LOAD CANDIDATES ---------------- */
 
 async function loadCandidates() {
   const snap = await getDocs(collection(db, "candidates"));
-  let html = "";
 
+  let html = "";
   snap.forEach(docu => {
     const c = docu.data();
+
     html += `
       <div class="card">
         <b>${c.name}</b><br>
@@ -134,17 +155,20 @@ async function loadCandidates() {
     `;
   });
 
-  document.getElementById("candidates").innerHTML = html;
+  const el = document.getElementById("candidates");
+  if (el) el.innerHTML = html;
 }
 
 /* ---------------- STUDENT ---------------- */
 
 async function studentDashboard() {
+  showApp();
+
   const userRef = doc(db, "users", currentUser.uid);
   const userSnap = await getDoc(userRef);
 
   if (!userSnap.exists()) {
-    alert("User missing.");
+    loginPage();
     return;
   }
 
@@ -157,19 +181,25 @@ async function studentDashboard() {
     <div class="container">
       <h2>Vote Now</h2>
       <div id="voteList"></div>
-      <button onclick="submitVote()">Submit Vote</button>
+      <button id="submitVoteBtn">Submit Vote</button>
     </div>
   `;
+
+  document.getElementById("submitVoteBtn").onclick = submitVote;
 
   loadVoteList();
 }
 
+/* ---------------- VOTE LIST ---------------- */
+
 async function loadVoteList() {
   const snap = await getDocs(collection(db, "candidates"));
+
   let html = "";
 
   snap.forEach(docu => {
     const c = docu.data();
+
     html += `
       <div class="card">
         <input type="radio" name="${c.position}" value="${docu.id}">
@@ -179,38 +209,35 @@ async function loadVoteList() {
     `;
   });
 
-  document.getElementById("voteList").innerHTML = html;
+  const el = document.getElementById("voteList");
+  if (el) el.innerHTML = html;
 }
 
-window.submitVote = async function () {
-  try {
-    const selected = document.querySelectorAll("input[type=radio]:checked");
+/* ---------------- SUBMIT VOTE ---------------- */
 
-    if (selected.length === 0) {
-      alert("Please complete your vote.");
-      return;
-    }
+async function submitVote() {
+  const selected = document.querySelectorAll("input[type=radio]:checked");
 
-    for (let input of selected) {
-      const ref = doc(db, "candidates", input.value);
-
-      await updateDoc(ref, {
-        votes: increment(1)
-      });
-    }
-
-    await updateDoc(doc(db, "users", currentUser.uid), {
-      voted: true
-    });
-
-    alert("Vote submitted successfully!");
-    studentDashboard();
-
-  } catch (err) {
-    console.error(err);
-    alert("Error submitting vote.");
+  if (selected.length === 0) {
+    alert("Please complete your vote.");
+    return;
   }
-};
+
+  for (let input of selected) {
+    const ref = doc(db, "candidates", input.value);
+
+    await updateDoc(ref, {
+      votes: increment(1)
+    });
+  }
+
+  await updateDoc(doc(db, "users", currentUser.uid), {
+    voted: true
+  });
+
+  alert("Vote submitted successfully!");
+  studentDashboard();
+}
 
 /* ---------------- RESULTS ---------------- */
 
@@ -220,6 +247,7 @@ function loadResults() {
 
     snap.forEach(docu => {
       const c = docu.data();
+
       html += `
         <div class="card">
           ${c.name} - ${c.votes} votes
@@ -234,14 +262,14 @@ function loadResults() {
 
 /* ---------------- LOGOUT ---------------- */
 
-window.logout = async function () {
+async function logout() {
   await signOut(auth);
   currentUser = null;
   role = null;
   loginPage();
-};
+}
 
-/* ---------------- INIT ---------------- */
+/* ---------------- AUTH STATE ---------------- */
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
