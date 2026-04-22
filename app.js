@@ -20,7 +20,7 @@ const loading = document.getElementById("loading");
 let currentUser = null;
 let role = null;
 
-/* ---------------- SAFE START ---------------- */
+/* ---------------- SAFE BOOT ---------------- */
 
 function showApp() {
   loading.style.display = "none";
@@ -35,16 +35,16 @@ function loginPage() {
   app.innerHTML = `
     <div class="container">
       <h2>School Voting System</h2>
-
       <input id="email" placeholder="Email / LRN Email">
       <input id="password" type="password" placeholder="Password">
-
       <button id="loginBtn">Login</button>
     </div>
   `;
 
   document.getElementById("loginBtn").onclick = login;
 }
+
+/* ---------------- LOGIN FUNCTION ---------------- */
 
 async function login() {
   try {
@@ -54,37 +54,37 @@ async function login() {
     const userCred = await signInWithEmailAndPassword(auth, email, password);
     currentUser = userCred.user;
 
-    const userSnap = await getDoc(doc(db, "users", currentUser.uid));
+    const snap = await getDoc(doc(db, "users", currentUser.uid));
 
-    if (!userSnap.exists()) {
+    if (!snap.exists()) {
       alert("User not found in database");
       return;
     }
 
-    role = userSnap.data().role;
+    role = snap.data().role;
     route();
 
   } catch (e) {
-    console.error(e);
-    alert("Login failed");
+    console.error("LOGIN ERROR:", e);
+    alert("Login failed. Check Firebase setup.");
   }
 }
 
-/* ---------------- ROUTER ---------------- */
+/* ---------------- ROUTE ---------------- */
 
 function route() {
-  if (role === "admin") admin();
-  else student();
+  if (!role) return loginPage();
+  role === "admin" ? adminDashboard() : studentDashboard();
 }
 
 /* ---------------- ADMIN ---------------- */
 
-async function admin() {
+async function adminDashboard() {
   showApp();
 
   app.innerHTML = `
     <div class="container">
-      <h2>Admin Dashboard</h2>
+      <h2>Admin</h2>
       <button onclick="logout()">Logout</button>
 
       <input id="name" placeholder="Name">
@@ -119,6 +119,8 @@ window.addCandidate = async function () {
   loadCandidates();
 };
 
+/* ---------------- LOAD CANDIDATES ---------------- */
+
 async function loadCandidates() {
   const snap = await getDocs(collection(db, "candidates"));
 
@@ -133,28 +135,30 @@ async function loadCandidates() {
 
 /* ---------------- STUDENT ---------------- */
 
-async function student() {
+async function studentDashboard() {
   showApp();
 
-  const userSnap = await getDoc(doc(db, "users", currentUser.uid));
+  const snap = await getDoc(doc(db, "users", currentUser.uid));
 
-  if (userSnap.data().voted) {
+  if (snap.data()?.voted) {
     app.innerHTML = "<h2>You already voted</h2>";
     return;
   }
 
   app.innerHTML = `
     <div class="container">
-      <h2>Vote</h2>
+      <h2>Vote Now</h2>
       <div id="voteList"></div>
       <button onclick="submitVote()">Submit</button>
     </div>
   `;
 
-  loadVotes();
+  loadVoteList();
 }
 
-async function loadVotes() {
+/* ---------------- VOTE LIST ---------------- */
+
+async function loadVoteList() {
   const snap = await getDocs(collection(db, "candidates"));
 
   let html = "";
@@ -173,10 +177,12 @@ async function loadVotes() {
   document.getElementById("voteList").innerHTML = html;
 }
 
+/* ---------------- SUBMIT VOTE ---------------- */
+
 window.submitVote = async function () {
   const selected = document.querySelectorAll("input[type=radio]:checked");
 
-  if (!selected.length) return alert("Complete your vote");
+  if (!selected.length) return alert("Complete vote first");
 
   for (let s of selected) {
     await updateDoc(doc(db, "candidates", s.value), {
@@ -189,7 +195,7 @@ window.submitVote = async function () {
   });
 
   alert("Vote submitted!");
-  student();
+  studentDashboard();
 };
 
 /* ---------------- RESULTS ---------------- */
