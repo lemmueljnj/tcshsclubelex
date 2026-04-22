@@ -13,47 +13,42 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap" rel="stylesheet">
 
   <style>
-    /* fallback so page is NEVER blank */
     body {
       margin: 0;
       font-family: Montserrat, sans-serif;
       background: #ffffff;
       color: #2b5069;
+    }
+
+    #loading {
+      position: fixed;
+      inset: 0;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      flex-direction: column;
     }
 
-    #fallback {
-      text-align: center;
+    #app {
+      display: none;
+      padding: 20px;
     }
   </style>
 </head>
 
 <body>
 
-  <!-- Fallback content (shows if JS fails) -->
-  <div id="fallback">
-    <h2>Loading School Voting System...</h2>
-    <p>If this message stays, JavaScript failed to load.</p>
+  <!-- Loading fallback (prevents blank screen) -->
+  <div id="loading">
+    <h2>Loading Voting System...</h2>
+    <p>If this stays, check console errors.</p>
   </div>
 
-  <!-- Main app container -->
-  <div id="app" style="display:none;"></div>
+  <!-- App root -->
+  <div id="app"></div>
 
-  <!-- Script -->
-  <script type="module">
-    try {
-      // if app.js loads correctly, hide fallback
-      document.getElementById("fallback").style.display = "none";
-      document.getElementById("app").style.display = "block";
-    } catch (e) {
-      console.error("App failed to load:", e);
-    }
-  </script>
-
-  <script type="module" src="app.js"></script>
+  <!-- Main app -->
+  <script type="module" src="./app.js"></script>
 
 </body>
 </html>
