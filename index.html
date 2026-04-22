@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>School Voting System</title>
 
@@ -12,19 +12,16 @@
 
 <body>
 
-  <!-- SAFE LOADING SCREEN -->
+  <!-- ALWAYS VISIBLE UNTIL JS WORKS -->
   <div id="loading">
     <h2>Loading Voting System...</h2>
-    <p>If this stays, check console (F12).</p>
+    <p>If this stays, open Console (F12)</p>
   </div>
 
   <!-- APP ROOT -->
   <div id="app"></div>
 
-  <!-- FIREBASE INIT FIRST -->
-  <script type="module" src="./firebase.js"></script>
-
-  <!-- MAIN APP -->
+  <!-- IMPORTANT: NO "./" FOR GITHUB PAGES ISSUES -->
   <script type="module" src="./app.js"></script>
 
 </body>
