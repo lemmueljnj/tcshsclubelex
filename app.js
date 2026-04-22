@@ -8,13 +8,11 @@ import {
   addDoc,
   getDocs,
   doc,
-  updateDoc,
   getDoc,
+  updateDoc,
   onSnapshot,
   increment
 } from "./firebase.js";
-
-/* ---------------- ROOT ---------------- */
 
 const app = document.getElementById("app");
 const loading = document.getElementById("loading");
@@ -22,14 +20,14 @@ const loading = document.getElementById("loading");
 let currentUser = null;
 let role = null;
 
-/* ---------------- INIT SAFE ---------------- */
+/* ---------------- SAFE START ---------------- */
 
 function showApp() {
   loading.style.display = "none";
   app.style.display = "block";
 }
 
-/* ---------------- LOGIN PAGE ---------------- */
+/* ---------------- LOGIN ---------------- */
 
 function loginPage() {
   showApp();
@@ -48,8 +46,6 @@ function loginPage() {
   document.getElementById("loginBtn").onclick = login;
 }
 
-/* ---------------- LOGIN ---------------- */
-
 async function login() {
   try {
     const email = document.getElementById("email").value;
@@ -58,75 +54,60 @@ async function login() {
     const userCred = await signInWithEmailAndPassword(auth, email, password);
     currentUser = userCred.user;
 
-    const userRef = doc(db, "users", currentUser.uid);
-    const userSnap = await getDoc(userRef);
+    const userSnap = await getDoc(doc(db, "users", currentUser.uid));
 
     if (!userSnap.exists()) {
-      alert("User not found in database.");
+      alert("User not found in database");
       return;
     }
 
     role = userSnap.data().role;
     route();
 
-  } catch (err) {
-    console.error(err);
-    alert("Login failed. Check credentials or Firebase setup.");
+  } catch (e) {
+    console.error(e);
+    alert("Login failed");
   }
 }
 
-/* ---------------- ROUTING ---------------- */
+/* ---------------- ROUTER ---------------- */
 
 function route() {
-  if (!role) return loginPage();
-
-  if (role === "admin") adminDashboard();
-  else studentDashboard();
+  if (role === "admin") admin();
+  else student();
 }
 
 /* ---------------- ADMIN ---------------- */
 
-async function adminDashboard() {
+async function admin() {
   showApp();
 
   app.innerHTML = `
     <div class="container">
       <h2>Admin Dashboard</h2>
-      <button id="logoutBtn">Logout</button>
+      <button onclick="logout()">Logout</button>
 
-      <h3>Add Candidate</h3>
       <input id="name" placeholder="Name">
       <input id="position" placeholder="Position">
       <input id="party" placeholder="Party">
 
-      <button id="addBtn">Add Candidate</button>
+      <button onclick="addCandidate()">Add</button>
 
-      <h3>Candidates</h3>
-      <div id="candidates"></div>
-
-      <h3>Live Results</h3>
+      <div id="list"></div>
       <div id="results"></div>
     </div>
   `;
-
-  document.getElementById("logoutBtn").onclick = logout;
-  document.getElementById("addBtn").onclick = addCandidate;
 
   loadCandidates();
   loadResults();
 }
 
-/* ---------------- ADD CANDIDATE ---------------- */
-
-async function addCandidate() {
+window.addCandidate = async function () {
   const name = document.getElementById("name").value;
   const position = document.getElementById("position").value;
   const party = document.getElementById("party").value;
 
-  if (!name || !position || !party) {
-    alert("Fill all fields");
-    return;
-  }
+  if (!name || !position || !party) return alert("Fill all fields");
 
   await addDoc(collection(db, "candidates"), {
     name,
@@ -136,97 +117,69 @@ async function addCandidate() {
   });
 
   loadCandidates();
-}
-
-/* ---------------- LOAD CANDIDATES ---------------- */
+};
 
 async function loadCandidates() {
   const snap = await getDocs(collection(db, "candidates"));
 
   let html = "";
-  snap.forEach(docu => {
-    const c = docu.data();
-
-    html += `
-      <div class="card">
-        <b>${c.name}</b><br>
-        ${c.position} - ${c.party}
-      </div>
-    `;
+  snap.forEach(d => {
+    const c = d.data();
+    html += `<div class="card">${c.name} - ${c.position}</div>`;
   });
 
-  const el = document.getElementById("candidates");
-  if (el) el.innerHTML = html;
+  document.getElementById("list").innerHTML = html;
 }
 
 /* ---------------- STUDENT ---------------- */
 
-async function studentDashboard() {
+async function student() {
   showApp();
 
-  const userRef = doc(db, "users", currentUser.uid);
-  const userSnap = await getDoc(userRef);
-
-  if (!userSnap.exists()) {
-    loginPage();
-    return;
-  }
+  const userSnap = await getDoc(doc(db, "users", currentUser.uid));
 
   if (userSnap.data().voted) {
-    app.innerHTML = "<h2>You already voted.</h2>";
+    app.innerHTML = "<h2>You already voted</h2>";
     return;
   }
 
   app.innerHTML = `
     <div class="container">
-      <h2>Vote Now</h2>
+      <h2>Vote</h2>
       <div id="voteList"></div>
-      <button id="submitVoteBtn">Submit Vote</button>
+      <button onclick="submitVote()">Submit</button>
     </div>
   `;
 
-  document.getElementById("submitVoteBtn").onclick = submitVote;
-
-  loadVoteList();
+  loadVotes();
 }
 
-/* ---------------- VOTE LIST ---------------- */
-
-async function loadVoteList() {
+async function loadVotes() {
   const snap = await getDocs(collection(db, "candidates"));
 
   let html = "";
 
-  snap.forEach(docu => {
-    const c = docu.data();
+  snap.forEach(d => {
+    const c = d.data();
 
     html += `
       <div class="card">
-        <input type="radio" name="${c.position}" value="${docu.id}">
-        <b>${c.name}</b><br>
-        ${c.party}
+        <input type="radio" name="${c.position}" value="${d.id}">
+        ${c.name} (${c.party})
       </div>
     `;
   });
 
-  const el = document.getElementById("voteList");
-  if (el) el.innerHTML = html;
+  document.getElementById("voteList").innerHTML = html;
 }
 
-/* ---------------- SUBMIT VOTE ---------------- */
-
-async function submitVote() {
+window.submitVote = async function () {
   const selected = document.querySelectorAll("input[type=radio]:checked");
 
-  if (selected.length === 0) {
-    alert("Please complete your vote.");
-    return;
-  }
+  if (!selected.length) return alert("Complete your vote");
 
-  for (let input of selected) {
-    const ref = doc(db, "candidates", input.value);
-
-    await updateDoc(ref, {
+  for (let s of selected) {
+    await updateDoc(doc(db, "candidates", s.value), {
       votes: increment(1)
     });
   }
@@ -235,24 +188,19 @@ async function submitVote() {
     voted: true
   });
 
-  alert("Vote submitted successfully!");
-  studentDashboard();
-}
+  alert("Vote submitted!");
+  student();
+};
 
 /* ---------------- RESULTS ---------------- */
 
 function loadResults() {
-  onSnapshot(collection(db, "candidates"), (snap) => {
+  onSnapshot(collection(db, "candidates"), snap => {
     let html = "";
 
-    snap.forEach(docu => {
-      const c = docu.data();
-
-      html += `
-        <div class="card">
-          ${c.name} - ${c.votes} votes
-        </div>
-      `;
+    snap.forEach(d => {
+      const c = d.data();
+      html += `<div class="card">${c.name}: ${c.votes}</div>`;
     });
 
     const el = document.getElementById("results");
@@ -262,31 +210,20 @@ function loadResults() {
 
 /* ---------------- LOGOUT ---------------- */
 
-async function logout() {
+window.logout = async function () {
   await signOut(auth);
-  currentUser = null;
-  role = null;
   loginPage();
-}
+};
 
-/* ---------------- AUTH STATE ---------------- */
+/* ---------------- INIT ---------------- */
 
-onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    loginPage();
-    return;
+onAuthStateChanged(auth, user => {
+  if (!user) loginPage();
+  else {
+    currentUser = user;
+    getDoc(doc(db, "users", user.uid)).then(snap => {
+      role = snap.data()?.role;
+      route();
+    });
   }
-
-  currentUser = user;
-
-  const userRef = doc(db, "users", user.uid);
-  const userSnap = await getDoc(userRef);
-
-  if (!userSnap.exists()) {
-    loginPage();
-    return;
-  }
-
-  role = userSnap.data().role;
-  route();
 });
