@@ -9,11 +9,9 @@ import {
   getDocs,
   doc,
   updateDoc,
-  setDoc,
   getDoc,
   onSnapshot,
-  query,
-  where
+  increment
 } from "./firebase.js";
 
 const app = document.getElementById("app");
@@ -35,21 +33,38 @@ function loginPage() {
 }
 
 window.login = async function () {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
+  try {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
 
-  const userCred = await signInWithEmailAndPassword(auth, email, password);
-  currentUser = userCred.user;
+    const userCred = await signInWithEmailAndPassword(auth, email, password);
+    currentUser = userCred.user;
 
-  const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-  role = userDoc.data().role;
+    const userRef = doc(db, "users", currentUser.uid);
+    const userSnap = await getDoc(userRef);
 
-  route();
+    if (!userSnap.exists()) {
+      alert("User not found in database.");
+      return;
+    }
+
+    role = userSnap.data().role;
+    route();
+
+  } catch (err) {
+    console.error(err);
+    alert("Login failed. Check credentials.");
+  }
 };
 
 /* ---------------- ROUTING ---------------- */
 
 function route() {
+  if (!role) {
+    loginPage();
+    return;
+  }
+
   if (role === "admin") adminDashboard();
   else studentDashboard();
 }
@@ -81,13 +96,28 @@ async function adminDashboard() {
 }
 
 window.addCandidate = async function () {
-  await addDoc(collection(db, "candidates"), {
-    name: name.value,
-    position: position.value,
-    party: party.value,
-    votes: 0
-  });
-  loadCandidates();
+  try {
+    const name = document.getElementById("name").value;
+    const position = document.getElementById("position").value;
+    const party = document.getElementById("party").value;
+
+    if (!name || !position || !party) {
+      alert("Please fill all fields.");
+      return;
+    }
+
+    await addDoc(collection(db, "candidates"), {
+      name,
+      position,
+      party,
+      votes: 0
+    });
+
+    loadCandidates();
+
+  } catch (err) {
+    console.error(err);
+  }
 };
 
 async function loadCandidates() {
@@ -110,9 +140,15 @@ async function loadCandidates() {
 /* ---------------- STUDENT ---------------- */
 
 async function studentDashboard() {
-  const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+  const userRef = doc(db, "users", currentUser.uid);
+  const userSnap = await getDoc(userRef);
 
-  if (userDoc.data().voted) {
+  if (!userSnap.exists()) {
+    alert("User missing.");
+    return;
+  }
+
+  if (userSnap.data().voted) {
     app.innerHTML = "<h2>You already voted.</h2>";
     return;
   }
@@ -147,23 +183,33 @@ async function loadVoteList() {
 }
 
 window.submitVote = async function () {
-  const inputs = document.querySelectorAll("input[type=radio]:checked");
+  try {
+    const selected = document.querySelectorAll("input[type=radio]:checked");
 
-  for (let i = 0; i < inputs.length; i++) {
-    const candidateRef = doc(db, "candidates", inputs[i].value);
-    const cSnap = await getDoc(candidateRef);
+    if (selected.length === 0) {
+      alert("Please complete your vote.");
+      return;
+    }
 
-    await updateDoc(candidateRef, {
-      votes: cSnap.data().votes + 1
+    for (let input of selected) {
+      const ref = doc(db, "candidates", input.value);
+
+      await updateDoc(ref, {
+        votes: increment(1)
+      });
+    }
+
+    await updateDoc(doc(db, "users", currentUser.uid), {
+      voted: true
     });
+
+    alert("Vote submitted successfully!");
+    studentDashboard();
+
+  } catch (err) {
+    console.error(err);
+    alert("Error submitting vote.");
   }
-
-  await updateDoc(doc(db, "users", currentUser.uid), {
-    voted: true
-  });
-
-  alert("Vote submitted successfully!");
-  studentDashboard();
 };
 
 /* ---------------- RESULTS ---------------- */
@@ -181,25 +227,38 @@ function loadResults() {
       `;
     });
 
-    document.getElementById("results").innerHTML = html;
+    const el = document.getElementById("results");
+    if (el) el.innerHTML = html;
   });
 }
 
 /* ---------------- LOGOUT ---------------- */
 
-window.logout = function () {
-  signOut(auth);
+window.logout = async function () {
+  await signOut(auth);
+  currentUser = null;
+  role = null;
   loginPage();
 };
 
 /* ---------------- INIT ---------------- */
 
 onAuthStateChanged(auth, async (user) => {
-  if (!user) loginPage();
-  else {
-    currentUser = user;
-    const userDoc = await getDoc(doc(db, "users", user.uid));
-    role = userDoc.data().role;
-    route();
+  if (!user) {
+    loginPage();
+    return;
   }
+
+  currentUser = user;
+
+  const userRef = doc(db, "users", user.uid);
+  const userSnap = await getDoc(userRef);
+
+  if (!userSnap.exists()) {
+    loginPage();
+    return;
+  }
+
+  role = userSnap.data().role;
+  route();
 });
