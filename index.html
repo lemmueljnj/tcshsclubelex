@@ -1,14 +1,59 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>School Voting System</title>
+
+  <!-- Styles -->
   <link rel="stylesheet" href="styles.css">
+
+  <!-- Font -->
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* fallback so page is NEVER blank */
+    body {
+      margin: 0;
+      font-family: Montserrat, sans-serif;
+      background: #ffffff;
+      color: #2b5069;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    #fallback {
+      text-align: center;
+    }
+  </style>
 </head>
 
 <body>
-  <div id="app"></div>
+
+  <!-- Fallback content (shows if JS fails) -->
+  <div id="fallback">
+    <h2>Loading School Voting System...</h2>
+    <p>If this message stays, JavaScript failed to load.</p>
+  </div>
+
+  <!-- Main app container -->
+  <div id="app" style="display:none;"></div>
+
+  <!-- Script -->
+  <script type="module">
+    try {
+      // if app.js loads correctly, hide fallback
+      document.getElementById("fallback").style.display = "none";
+      document.getElementById("app").style.display = "block";
+    } catch (e) {
+      console.error("App failed to load:", e);
+    }
+  </script>
 
   <script type="module" src="app.js"></script>
+
 </body>
 </html>
