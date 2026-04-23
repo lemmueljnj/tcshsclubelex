@@ -46,6 +46,7 @@ export const db = getFirestore(firebaseApp);
 
 export {
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   onAuthStateChanged,
   signOut,
   collection,
