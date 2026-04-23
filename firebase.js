@@ -28,7 +28,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyBXGhX5RMuw5hGNdfgr9UY-dByt7PFrFoo",
   authDomain: "tcshs-club-elections--26.firebaseapp.com",
   projectId: "tcshs-club-elections--26",
-  storageBucket: "tcshs-club-elections--26.appspot.com", // 🔥 FIXED
+  storageBucket: "tcshs-club-elections--26.firebasestorrage.app", // 🔥 FIXED
   messagingSenderId: "189056913210",
   appId: "1:189056913210:web:68b8ece468ecb93c824a03"
   // measurementId removed (since analytics removed)
