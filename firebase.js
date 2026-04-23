@@ -1,5 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js";
+
+/* 🔥 REMOVE ANALYTICS (causes issues on localhost / GitHub Pages sometimes) */
+// import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js";
 
 import {
   getAuth,
@@ -26,21 +28,20 @@ const firebaseConfig = {
   apiKey: "AIzaSyBXGhX5RMuw5hGNdfgr9UY-dByt7PFrFoo",
   authDomain: "tcshs-club-elections--26.firebaseapp.com",
   projectId: "tcshs-club-elections--26",
-  storageBucket: "tcshs-club-elections--26.firebasestorage.app",
+  storageBucket: "tcshs-club-elections--26.appspot.com", // 🔥 FIXED
   messagingSenderId: "189056913210",
-  appId: "1:189056913210:web:68b8ece468ecb93c824a03",
-  measurementId: "G-VFCWQPCMZC"
+  appId: "1:189056913210:web:68b8ece468ecb93c824a03"
+  // measurementId removed (since analytics removed)
 };
 
 /* ---------------- INIT ---------------- */
 
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+const firebaseApp = initializeApp(firebaseConfig);
 
 /* ---------------- EXPORTS ---------------- */
 
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+export const auth = getAuth(firebaseApp);
+export const db = getFirestore(firebaseApp);
 
 export {
   signInWithEmailAndPassword,
