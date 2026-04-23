@@ -2,6 +2,7 @@ import {
   auth,
   db,
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   onAuthStateChanged,
   signOut,
   collection,
